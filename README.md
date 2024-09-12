@@ -8,7 +8,7 @@
 - [TUH EEG Corpus](https://isip.piconepress.com/projects/tuh_eeg/html/downloads.shtml#c_tueg)
 - [BCI Competition IV 2a Dataset](https://www.bbci.de/competition/iv/#datasets)
 ## True Labels
-- [Url] (https://www.bbci.de/competition/iv/results/index.html)
+- [Url](https://www.bbci.de/competition/iv/results/index.html)
 
 
 ## Objective
