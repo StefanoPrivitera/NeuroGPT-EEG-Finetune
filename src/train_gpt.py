@@ -28,7 +28,7 @@ src/trainer: Trainer for model; invokes instance of
 src/model: Build full model from components (ie., embedder, 
     decoder, unembedder). See make_model() below for details.
 """
-from batcher.downstream_dataset import MotorImageryDataset
+from batcher.downstream_dataset import EmotionDataset, MotorImageryDataset
 import torch
 import os
 import argparse
@@ -140,13 +140,13 @@ def train(config: Dict=None) -> Trainer:
         train_files = train_folds[config['fold_i']]
         test_files = test_folds[config['fold_i']]
 
-        train_dataset = MotorImageryDataset(train_files, sample_keys=[
+        train_dataset = EmotionDataset(train_files, sample_keys=[
                 'inputs',
                 'attention_mask'
             ], chunk_len=config["chunk_len"], num_chunks=config["num_chunks"], ovlp=config["chunk_ovlp"], root_path=downstream_path, gpt_only= not config["use_encoder"])
         # pdb.set_trace()
         
-        test_dataset = MotorImageryDataset(test_files, sample_keys=[
+        test_dataset = EmotionDataset(test_files, sample_keys=[
                 'inputs',
                 'attention_mask'
             ], chunk_len=config["chunk_len"], num_chunks=config["num_chunks"], ovlp=config["chunk_ovlp"], root_path=downstream_path, gpt_only= not config["use_encoder"])
@@ -262,7 +262,6 @@ def make_model(model_config: Dict=None):
         encoder = EEGConformer(n_outputs=model_config["num_decoding_classes"], n_chans=22, n_times=model_config['chunk_len'], ch_pos=chann_coords, is_decoding_mode=model_config["ft_only_encoder"])
         #calculates the output dimension of the encoder, which is the output of transformer layer.
         model_config["parcellation_dim"] = ((model_config['chunk_len'] - model_config['filter_time_length'] + 1 - model_config['pool_time_length']) // model_config['stride_avg_pool'] + 1) * model_config['n_filters_time']
-
     else:
         encoder = None
         model_config["parcellation_dim"] = model_config["chunk_len"] * 22
