@@ -189,11 +189,10 @@ class EmotionDataset(EEGDataset):
 
         self.data_all = []
         for subject_id in ([0,1,2,3,4,5,6,7,8,9]):
-            # print(f"Loading NPZ file: {fn}")
             pruned_path = str("/home/insane/Scrivania/eremus_npz/")
             sessions = getPrunedSessions(pruned_path)
             raw = mne.io.read_raw_eeglab(Path(pruned_path)/sessions[sub(subject_id)], verbose=False)
-            data, times = raw[:]
+            data, _ = raw[:]
             data_dict = {
                     's': data,
                     'etyp': raw.annotations.description,
@@ -207,10 +206,7 @@ class EmotionDataset(EEGDataset):
         print(f"data_all structure: {[type(item) for item in self.data_all]}")
         # print(f"Example data structure: {self.data_all[0]}")
 
-        self.mi_types = {769: 'left', 770: 'right', 771: 'foot', 772: 'tongue', 1023: 'rejected'}
-        self.labels_string2int = {'left': 0, 'right': 1, 'foot': 2, 'tongue': 3}
-        self.Fs = 250  # 250Hz from original paper
-
+        
         # Load transformation matrix and ensure correct shape
         self.P = np.load("../inputs/tMatrix_value.npy")
         if self.P.shape != (22, 22):
@@ -246,11 +242,7 @@ class EmotionDataset(EEGDataset):
     def get_trials_from_single_subj(self, sub_id):
         try:
             raw = self.data_all[sub_id]['s']  # (channels, time)
-            events_type = self.data_all[sub_id]['etyp']
-            events_position = self.data_all[sub_id]['epos']
-            events_duration = self.data_all[sub_id]['edur']
-            artifacts = self.data_all[sub_id]['artifacts']
-            
+           
             # print(f"Subject {sub_id} annotations: {events_type}")
             self.xlsx = pd.read_excel("../augmented_eremus.xlsx")
             filter = self.xlsx["original_index"] == sub_id
@@ -273,10 +265,7 @@ class EmotionDataset(EEGDataset):
                 
                 trial_start=int(rows.iloc[j,6]) 
                 trial_stop=trial_start+500
-                # idxs = rows.iloc[:,0]
-                # print(trial_start,trial_stop)
-                # Define the trial window based on your requirements
-                
+               
                 # Ensure valid interval
                 if trial_stop > raw.shape[1]:
                     print(f"Invalid trial interval for trial {j}: start={trial_start}, stop={trial_stop}, max={raw.shape[1]}")
@@ -291,10 +280,7 @@ class EmotionDataset(EEGDataset):
                     continue
                 print(trial.shape)
                 trials.append(trial)
-                # print(f"Loaded trial {j} from subject {sub_id} with shape {trial.shape}")
-                # except Exception as e:
-                #     print(f"Cannot load trial {j} from subject {sub_id}: {e}")
-                #     continue
+               
             print(f"Total trials loaded from subject {sub_id}: {len(trials)}")
             
             return trials, classes
@@ -344,13 +330,3 @@ class EmotionDataset(EEGDataset):
             return self.normalize(trials_all_arr), labels_all_arr, total_num
         else:
             raise ValueError("No trial data available to concatenate")
-
-    def bandpass_filter(self, data, lowcut, highcut, fs, order=5):
-        nyq = 0.5 * fs
-        low = lowcut / nyq
-        high = highcut / nyq
-        
-        b, a = butter(order, [low, high], btype='band')
-        filtered_data = filtfilt(b, a, data, axis=1)  # Apply along the time axis
-        
-        return filtered_data
